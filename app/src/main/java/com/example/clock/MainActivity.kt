@@ -4,7 +4,6 @@ import com.example.clock.viewmodel.ClockViewModel
 import com.example.clock.model.Clock
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -16,8 +15,8 @@ import com.example.clock.databinding.ActivityMainBinding
 class MainActivity : AppCompatActivity() {
     private lateinit var binding : ActivityMainBinding
     private lateinit var viewModel: ClockViewModel
-    val mutableMap: MutableMap<Int, Clock> = mutableMapOf()
-    var position = 0
+    private val mutableMap: MutableMap<Int, Clock> = mutableMapOf()
+    private var position = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,19 +33,18 @@ class MainActivity : AppCompatActivity() {
         binding.btnAdd.setOnClickListener{
             val clock = Clock()
             clockAdapter.addItem(clock)
-            mutableMap.put(position,clock)
+            mutableMap[position] = clock
             position++
         }
         clockAdapter.onClickBtn={position,clock ->
-            mutableMap[position]?.let { viewModel.toggleTimer(mutableMap,position) }
-           // Log.d("tag111",""+viewModel.time.value)
+            mutableMap[position]?.let { viewModel.updateTimer(mutableMap,position) }
         }
 
-        viewModel.clockUpdates.observe(this, Observer { map ->
+        viewModel.clockUpdates.observe(this) { map ->
             map.forEach { (position, clock) ->
                 clockAdapter.updateClockAtPosition(position, clock)
             }
-        })
+        }
         clockAdapter.onClickReset={position ->
             viewModel.resetTimerAtPosition(position)
         }

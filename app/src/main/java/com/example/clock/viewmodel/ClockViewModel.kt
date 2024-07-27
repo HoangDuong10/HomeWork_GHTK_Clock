@@ -15,7 +15,7 @@ class ClockViewModel : ViewModel() {
     val clockUpdates: LiveData<Map<Int, Clock>> get() = _clockUpdates
     var areTimersRunning = false
 
-    fun toggleTimer(map: Map<Int, Clock>, position: Int) {
+    fun updateTimer(map: Map<Int, Clock>, position: Int) {
         if (map[position]?.timerJob?.isActive == true) {
             map[position]?.timerJob?.cancel()
         } else {
@@ -33,12 +33,12 @@ class ClockViewModel : ViewModel() {
         _clockUpdates.postValue(map)
     }
     fun resetTimerAtPosition(position: Int) {
-        val currentMap = _clockUpdates.value
-        val item = currentMap?.get(position)
+        val currentMap = _clockUpdates.value ?:return
+        val item = currentMap[position]
 
         item?.timerJob?.cancel()
         item?.startTime = System.currentTimeMillis()
-        item?.startTime = 0 // Đặt lại thời gian về 00:00:00
+        item?.startTime = 0
         _clockUpdates.postValue(currentMap)
     }
 
@@ -52,7 +52,6 @@ class ClockViewModel : ViewModel() {
     }
 
     fun toggleAllTimers(map: MutableMap<Int, Clock>) {
-
         if (areTimersRunning) {
             map.keys.toList().forEach { index ->
                 map[index]?.timerJob?.cancel()
@@ -62,7 +61,6 @@ class ClockViewModel : ViewModel() {
             map.values.forEach{  clock ->
                 if (clock.timerJob?.isActive != true) {
                     clock.timerJob?.cancel()
-
                     val job = viewModelScope.launch {
                         while (true) {
                             clock.startTime += 1
@@ -74,7 +72,6 @@ class ClockViewModel : ViewModel() {
                 }
             }
         }
-
         areTimersRunning = !areTimersRunning
         _clockUpdates.value = map
     }
