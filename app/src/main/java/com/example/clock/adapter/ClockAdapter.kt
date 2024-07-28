@@ -1,4 +1,5 @@
 package com.example.clock.adapter
+import android.annotation.SuppressLint
 import com.example.clock.model.Clock
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -8,18 +9,19 @@ import com.example.clock.databinding.ItemClockBinding
 import com.example.clock.util.StringUtil
 
 class ClockAdapter : RecyclerView.Adapter<ClockAdapter.ClockViewHolder>() {
-    var onClickBtn: ((position : Int,clock : Clock) -> Unit)? = null
-    var onClickReset: ((position : Int) -> Unit)? = null
+    var onClickPauseOrPlay: ((position : Int, clock : Clock) -> Unit)? = null
+    var onClickReset: ((position : Int,clock : Clock) -> Unit)? = null
     private var listTime : MutableList<Clock> = mutableListOf()
     inner class ClockViewHolder(private var binding : ItemClockBinding) : RecyclerView.ViewHolder(binding.root){
+        @SuppressLint("SuspiciousIndentation")
         fun bind(clock : Clock, position: Int){
             binding.tvTime.text = StringUtil.formatTime(clock.startTime)
                 binding.btnPlayOrPause.setOnClickListener{
-                    onClickBtn?.invoke(position,clock)
+                    onClickPauseOrPlay?.invoke(position,clock)
 
                 }
                 binding.btnReset.setOnClickListener{
-                    onClickReset?.invoke(position)
+                    onClickReset?.invoke(position,clock)
 
                 }
 
