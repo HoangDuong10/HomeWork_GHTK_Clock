@@ -9,68 +9,80 @@ import kotlinx.coroutines.*
 
 class ClockViewModel : ViewModel() {
 
-    private val _clockUpdates: MutableLiveData<Map<Int, Clock>> = MutableLiveData(emptyMap())
-    val clockUpdates: LiveData<Map<Int, Clock>> get() = _clockUpdates
+//    private var _listClock: MutableLiveData<MutableList<Clock>> = MutableLiveData(mutableListOf())
+//    val listClock: LiveData<MutableList<Clock>> get() = _listClock
+    private var listClock: MutableList<Clock> = mutableListOf()
+    private val _position: MutableLiveData<Int> = MutableLiveData()
+    val position: LiveData<Int> get() = _position
+    private val _areTimersRunning: MutableLiveData<Boolean> = MutableLiveData(false)
+    val areTimersRunning: LiveData<Boolean> get() = _areTimersRunning
 
-    var areTimersRunning = false
+    fun addItem(clock : Clock) {
+        listClock.add(clock)
+    }
 
-    fun updateTimer(map: Map<Int, Clock>, position: Int) {
-        if (map[position]?.timerJob?.isActive == true) {
-            map[position]?.timerJob?.cancel()
+    fun getListClock(): List<Clock> {
+        return listClock
+    }
+
+    fun getClockAtPosition(position: Int): Clock {
+        return listClock[position]
+    }
+
+    fun updateTimer(position: Int) {
+        val updateClock = listClock
+        if (updateClock[position].timerJob?.isActive == true) {
+            updateClock[position].timerJob?.cancel()
         } else {
             val job = viewModelScope.launch {
                 while (true) {
-                    map[position]?.let {
-                        it.startTime++
-                    }
-                    _clockUpdates.value = map
+                    updateClock[position].startTime++
+                    _position.value = position
                     delay(1000)
                 }
             }
-            map[position]?.timerJob = job
+            updateClock[position].timerJob = job
         }
-        _clockUpdates.postValue(map)
+        _position.postValue(position)
     }
 
     fun resetTimerAtPosition(position: Int) {
-        val currentMap = _clockUpdates.value ?: return
-        val item = currentMap[position]
-        item?.timerJob?.cancel()
-        item?.startTime = System.currentTimeMillis()
-        item?.startTime = 0
-        _clockUpdates.postValue(currentMap)
+        val updateClock = listClock
+        updateClock[position].timerJob?.cancel()
+        updateClock[position].startTime = 0
+        _position.value = position
 
     }
 
-    fun resetAllTimers(mutableMap: MutableMap<Int, Clock>) {
-        mutableMap.keys.toList().forEach { index ->
-            mutableMap[index]?.timerJob?.cancel()
-            mutableMap[index]?.startTime = 0
+
+    fun resetAllTimers() {
+        listClock.forEachIndexed { index, _ ->
+            listClock[index].timerJob?.cancel()
+            listClock[index].startTime = 0
         }
-        areTimersRunning = false
-        _clockUpdates.postValue(mutableMap)
+        _areTimersRunning.value = false
     }
 
-    fun updateAllTimers(map: MutableMap<Int, Clock>) {
-        if (areTimersRunning) {
-            map.keys.toList().forEach { index ->
-                map[index]?.timerJob?.cancel()
+
+    fun updateAllTimers() {
+        if (_areTimersRunning.value==true) {
+           listClock.forEach { clock ->
+               clock.timerJob?.cancel()
             }
         } else {
-            map.values.forEach { clock ->
+         listClock.forEachIndexed { index, clock ->
                 clock.timerJob?.cancel()
                 val job = viewModelScope.launch {
                     while (true) {
                         clock.startTime += 1
+                        _position.value = index
                         delay(1000)
-                        _clockUpdates.value = map
                     }
                 }
                 clock.timerJob = job
             }
         }
-        areTimersRunning = !areTimersRunning
-        _clockUpdates.value = map
+    _areTimersRunning.value = !_areTimersRunning.value!!
     }
 
 }

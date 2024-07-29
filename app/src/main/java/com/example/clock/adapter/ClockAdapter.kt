@@ -30,8 +30,6 @@ class ClockAdapter : RecyclerView.Adapter<ClockAdapter.ClockViewHolder>() {
                 }else{
                     binding.btnPlayOrPause.setImageResource(R.drawable.ic_play)
                 }
-
-
         }
     }
 
@@ -59,5 +57,12 @@ class ClockAdapter : RecyclerView.Adapter<ClockAdapter.ClockViewHolder>() {
             notifyItemChanged(position)
         }
     }
+
+    fun updateAllItem(newList: List<Clock>) {
+        listTime.clear()
+        listTime.addAll(newList)
+        notifyDataSetChanged()
+    }
+
 
 }

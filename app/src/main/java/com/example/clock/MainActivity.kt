@@ -16,8 +16,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding : ActivityMainBinding
     private lateinit var viewModel: ClockViewModel
     private lateinit var clockAdapter : ClockAdapter
-    private val clockMap: MutableMap<Int, Clock> = mutableMapOf()
-    private var position = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,20 +25,16 @@ class MainActivity : AppCompatActivity() {
         disPlayListClock()
         onClickAddOrPauseOrPlayOrResetAll()
         onClickPauseOrPlayOrResetAtPosition()
-        viewModel.clockUpdates.observe(this) { map ->
-            map.forEach { (position, clock) ->
-                clockAdapter.updateClockAtPosition(position, clock)
-            }
+        viewModel.position.observe(this){position->
+            val newClock = viewModel.getClockAtPosition(position)
+            clockAdapter.updateClockAtPosition(position, newClock)
+
         }
+        viewModel.areTimersRunning.observe(this) {
+            val newListClock = viewModel.getListClock() // Phương thức để lấy toàn bộ danh sách Clock
+            clockAdapter.updateAllItem(newListClock)
 
-    }
-
-    private fun updateButton() {
-       if(viewModel.areTimersRunning){
-           binding.btnPlayOrPause.setImageResource(R.drawable.ic_pause)
-       }else{
-           binding.btnPlayOrPause.setImageResource(R.drawable.ic_play)
-       }
+        }
     }
 
     private fun disPlayListClock(){
@@ -57,27 +51,33 @@ class MainActivity : AppCompatActivity() {
         binding.btnAdd.setOnClickListener{
             val clock = Clock()
             clockAdapter.addItem(clock)
-            clockMap[position] = clock
-            position++
+            viewModel.addItem(clock)
         }
 
         binding.btnReset.setOnClickListener{
-            viewModel.resetAllTimers(clockMap)
+            viewModel.resetAllTimers()
             binding.btnPlayOrPause.setImageResource(R.drawable.ic_play)
         }
 
         binding.btnPlayOrPause.setOnClickListener {
-            viewModel.updateAllTimers(clockMap)
+            viewModel.updateAllTimers()
             updateButton()
+        }
+    }
+
+    private fun updateButton() {
+        if(viewModel.areTimersRunning.value == true){
+            binding.btnPlayOrPause.setImageResource(R.drawable.ic_pause)
+        }else{
+            binding.btnPlayOrPause.setImageResource(R.drawable.ic_play)
         }
     }
 
     private fun onClickPauseOrPlayOrResetAtPosition(){
         clockAdapter.onClickPauseOrPlay={ position, _ ->
-            clockMap[position]?.let { viewModel.updateTimer(clockMap,position) }
+            viewModel.updateTimer(position)
         }
-
-
+//
         clockAdapter.onClickReset={ position, _ ->
             viewModel.resetTimerAtPosition(position)
         }
